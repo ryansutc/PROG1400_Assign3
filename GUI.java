@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+
 import javax.swing.*;
 
 public class GUI{
@@ -32,8 +33,9 @@ public class GUI{
 	private JLabel lblBadguyStrength;
 	private JLabel lblBadguyMoney;
 	private JLabel lblBadguy;
-	private JEditorPane jepDialog;
+	private JTextArea jepDialog;
 	private JScrollPane scrollPane;
+	private JLabel lblLevelUp;
 	
 	private JButton btnFlee;
 	private JButton btnAttack;
@@ -42,32 +44,29 @@ public class GUI{
 	private JButton btnReturnToWelcome;
 	private JButton btnUseStuff;
 	private JButton btnBuyStuff;
+	private JButton btnGameDone;
 	
 	//pnlRules (rules/credits) form items
 	private JButton btnReturn;
+	private JEditorPane jepRulesCreditsText; //text panel
 	
 	//pnlStuff (buy stuff/use stuff) form items
 	
 	private JComboBox cboStuff;
-	private JEditorPane editorPane;
-	private String[] itemNames =  {"Powerbar ($50)", 
-			"Bike Chain ($50)", 
-			"Pepper Spray ($75)", 
-			"Hockey Stick ($150)", 
-			"Corrupt Police Officer ($100)"};
+	private JTextArea editorPane;
+	
 	private JLabel lblItem;
 	private JLabel lblAlreadyUsed;
-	private Icon[] imgIcons = {new ImageIcon(getClass().getResource("/img/powerbar.png")), 
-			new ImageIcon(getClass().getResource("/img/bikechain.png")),
-			new ImageIcon(getClass().getResource("/img/pepperspray.png")),
-			new ImageIcon(getClass().getResource("/img/hockeystick.png")),
-			new ImageIcon(getClass().getResource("/img/corruptpoliceofficer.png"))
-	};
 	
 	//pnlStuff (use stuff/getstuff scenes)
 	private JButton btnUseItem;
+	private JButton btnBuyItem;
+	private JLabel lblMoney;
 
-	
+	//pnlGameWon Stuff
+	JPanel pnlGameWon;
+	JButton btnGameRestarted;
+	JLabel lblFinalScore;
 
 	
 	/**
@@ -91,8 +90,53 @@ public class GUI{
 		frame.setTitle("Bob the Bike Courier");			
 		frame.getContentPane().setLayout(null);
 		
+		pnlGameWon = new JPanel();
+		pnlGameWon.setBackground(Color.WHITE);
+		pnlGameWon.setBounds(0, 0, 334, 472);
+		frame.getContentPane().add(pnlGameWon);
+		pnlGameWon.setLayout(null);
+		pnlGameWon.setVisible(false);
+		
+		lblFinalScore = new JLabel("Final Score:");
+		lblFinalScore.setFont(new Font("Tahoma", Font.BOLD, 11));
+		lblFinalScore.setBounds(29, 130, 183, 45);
+		pnlGameWon.add(lblFinalScore);
+		
+		JButton btnExit = new JButton("Exit");
+		btnExit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				 frame.setVisible(false); //you can't see me!
+				 frame.dispose(); //Destroy the JFrame object
+			}
+		});
+		btnExit.setBounds(235, 438, 89, 23);
+		pnlGameWon.add(btnExit);
+		
+		btnGameRestarted = new JButton("Restart Game");
+		btnGameRestarted.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				game = new Game();
+				
+			}
+		});
+		btnGameRestarted.setBounds(10, 438, 89, 23);
+		pnlGameWon.add(btnGameRestarted);
+		
+		JLabel lblGameWon = new JLabel();
+		lblGameWon.setText("<html>Game <br/>\r\nWon!</html>");
+		lblGameWon.setFont(new Font("Hobo Std", Font.PLAIN, 36));
+		lblGameWon.setBounds(30, 11, 137, 123);
+		pnlGameWon.add(lblGameWon);
+		
+		JLabel lblNewLabel = new JLabel("");
+		lblNewLabel.setIcon(new ImageIcon(GUI.class.getResource("/img/hipsterbiker.png")));
+		lblNewLabel.setBounds(20, 0, 287, 472);
+		pnlGameWon.add(lblNewLabel);
+		
 		//Initialize Generic Panel
 		pnlGeneric = new JPanel();
+		pnlGeneric.setBackground(Color.WHITE);
 		pnlGeneric.setBounds(0, 0, 334, 472);
 		frame.getContentPane().add(pnlGeneric);
 		pnlGeneric.setLayout(null);
@@ -159,11 +203,21 @@ public class GUI{
 		lblBadguy.setBounds(172, 71, 106, 14);
 		pnlGeneric.add(lblBadguy);
 		
+		//lblLevelUp (only shown on win screens)
+		lblLevelUp = new JLabel("Level Up!");
+		lblLevelUp.setVerticalAlignment(SwingConstants.TOP);
+		lblLevelUp.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 13));
+		lblLevelUp.setBounds(135, 88, 147, 110);
+		pnlGeneric.add(lblLevelUp);
+		
 		//Main Text/Dialog Pane
-		jepDialog = new JEditorPane();
+		jepDialog = new JTextArea();
 		jepDialog.setEditable(false);
 		jepDialog.setText("Battle");
+		jepDialog.setFont(new Font("Courier New", Font.PLAIN, 11));
 		jepDialog.setBounds(10, 228, 252, 176);
+		jepDialog.setWrapStyleWord(true);
+		jepDialog.setLineWrap(true);
 		pnlGeneric.add(jepDialog);
 		
 		scrollPane = new JScrollPane(jepDialog);
@@ -178,7 +232,9 @@ public class GUI{
 		btnFlee.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				//call function to calculate flee loss
-				loadScene("flee");
+				game.bob.flee(); //resets bob's health, recalcs money..
+				game.badguy.setCurhealth(game.badguy.getMaxhealth());
+				loadScene("lose");
 			}
 		});
 		
@@ -191,15 +247,28 @@ public class GUI{
 				pnlGeneric.setVisible(false);
 				pnlWelcome.setVisible(false);
 				pnlRules.setVisible(false);
+				pnlGameWon.setVisible(false);
 				pnlStuff.setVisible(true);
+				loadScene("use stuff");
 				
-				checkItemState();
 			}
 		});
 		
 		btnBuyStuff = new JButton("Buy Stuff");
 		btnBuyStuff.setBounds(106, 420, 81, 31);
 		pnlGeneric.add(btnBuyStuff);
+		btnBuyStuff.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				//call function to calculate attack
+				pnlGeneric.setVisible(false);
+				pnlWelcome.setVisible(false);
+				pnlRules.setVisible(false);
+				pnlGameWon.setVisible(false);
+				pnlStuff.setVisible(true);
+				loadScene("buy stuff");
+				
+			}
+		});
 		
 		btnAttack = new JButton("Attack");
 		btnAttack.setBounds(197, 420, 81, 31);
@@ -217,6 +286,21 @@ public class GUI{
 			}
 		});
 		
+		btnGameDone = new JButton("Game Done");
+		btnGameDone.setBounds(197, 420, 81, 31);
+		pnlGeneric.add(btnGameDone);
+		btnGameDone.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				//Load game won panel
+				pnlGeneric.setVisible(false);
+				pnlStuff.setVisible(false);
+				pnlWelcome.setVisible(false);
+				pnlGameWon.setVisible(true);
+				
+				
+			}
+		});
+		
 		btnNextLevel = new JButton("Next Level");
 		btnNextLevel.setBounds(197, 420, 81, 31);
 		pnlGeneric.add(btnNextLevel);
@@ -224,7 +308,6 @@ public class GUI{
 			public void actionPerformed(ActionEvent arg0) {
 				//call function to calculate flee loss
 				
-				game.setLevel(game.getLevel() + 1); //changing level will update badguy automatically
 				loadScene("battle");
 			}
 		});
@@ -235,11 +318,11 @@ public class GUI{
 		btnBattleOver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				//call function to calculate flee loss
-				if (game.badguy.getCurhealth() == 0){
+				if (game.bob.getCurhealth() != 0){
 					loadScene("win");
 				}
 				else if (game.bob.getCurhealth() == 0){
-					loadScene("gameover");
+					loadScene("game over");
 				}
 				else {
 					loadScene("lose");
@@ -249,17 +332,130 @@ public class GUI{
 		});
 		pnlGeneric.setVisible(false);
 		
-		btnReturnToWelcome = new JButton("Return");
+		
+		btnReturnToWelcome = new JButton("Return.");
 		btnReturnToWelcome.setBounds(106, 420, 81, 31);
 		pnlGeneric.add(btnReturnToWelcome);
+		
 		btnReturnToWelcome.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+		pnlRules.setVisible(false);
+		pnlGeneric.setVisible(false);
+		pnlGameWon.setVisible(false);
+		pnlStuff.setVisible(false);
+		pnlWelcome.setVisible(true);
+		game = new Game();
+			}
+		});
+		
+		//Welcome Panel 
+		pnlWelcome = new JPanel();
+		pnlWelcome.setBackground(Color.WHITE);
+		pnlWelcome.setBounds(0, 0, 334, 472);
+		frame.getContentPane().add(pnlWelcome);
+		pnlWelcome.setLayout(null);
+		
+		
+		pnlWelcome.setVisible(true);
+		JLabel lblTitle_1 = new JLabel();
+		lblTitle_1.setFont(new Font("Hobo Std", Font.PLAIN, 36));
+		lblTitle_1.setBounds(10, 22, 216, 46);
+		lblTitle_1.setText("Welcome"); //Welcome, Battle!, etc
+		pnlWelcome.add(lblTitle_1);
+		
+		//Bob Icon
+		JLabel lblBobImage_1 = new JLabel();
+		lblBobImage_1.setIcon(new ImageIcon(GameFrame.class.getResource("/img/bobsm.png")));
+		lblBobImage_1.setBounds(10, 88, 95, 89);
+		pnlWelcome.add(lblBobImage_1);
+		
+		//Main Text/Dialog Pane
+		JTextArea txtDialog = new JTextArea();
+		txtDialog.setFont(new Font("Courier New", Font.PLAIN, 11));
+		txtDialog.setEditable(false);
+		txtDialog.setText(game.getWelcomeMsg());
+		txtDialog.setBounds(10, 228, 181, 223);
+		txtDialog.setWrapStyleWord(true);
+		txtDialog.setLineWrap(true);
+		pnlWelcome.add(txtDialog);
+		
+		JButton btnStart = new JButton("Start");
+		btnStart.setBounds(197, 420, 81, 31);
+		btnStart.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				pnlWelcome.setVisible(false);
+				pnlRules.setVisible(false);
+				pnlGameWon.setVisible(false);
+				pnlGeneric.setVisible(true);
+				
+				game.setLevel(1);
+				loadScene("battle");
+				//pnlGeneric.getCompo
+			}
+		});
+		
+				pnlWelcome.add(btnStart);
+				
+				JButton btnCredits = new JButton("Credits");
+				btnCredits.setBounds(197, 378, 81, 31);
+				btnCredits.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						pnlWelcome.setVisible(false);
+						pnlGeneric.setVisible(false);
+						pnlGameWon.setVisible(false);
+						pnlStuff.setVisible(false);
+						pnlRules.setVisible(true);
+						loadScene("credits");
+					}
+				});
+				pnlWelcome.add(btnCredits);
+				
+				JButton btnRules = new JButton("Rules");
+				btnRules.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						pnlWelcome.setVisible(false);
+						pnlGeneric.setVisible(false);
+						pnlStuff.setVisible(false);
+						pnlGameWon.setVisible(false);
+						pnlRules.setVisible(true);
+						loadScene("rules");
+					}
+				});
+				btnRules.setBounds(197, 336, 81, 31);
+				pnlWelcome.add(btnRules);
+		
+		pnlRules = new JPanel();
+		pnlRules.setBackground(Color.WHITE);
+		pnlRules.setBounds(0, 0, 334, 472);
+		frame.getContentPane().add(pnlRules);
+		pnlRules.setLayout(null);
+		
+		JLabel lblRules = new JLabel();
+		lblRules.setText("How to Play");
+		lblRules.setFont(new Font("Hobo Std", Font.PLAIN, 36));
+		lblRules.setBounds(10, 22, 216, 46);
+		pnlRules.add(lblRules);
+		
+		jepRulesCreditsText = new JEditorPane();
+		jepRulesCreditsText.setFocusable(false);
+		jepRulesCreditsText.setEditable(false);
+		jepRulesCreditsText.setText("autopopulate");
+		jepRulesCreditsText.setBounds(10, 79, 314, 327);
+		pnlRules.add(jepRulesCreditsText);
+		
+		JButton btnBack = new JButton("Back");
+		btnBack.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				pnlWelcome.setVisible(true);
 				pnlRules.setVisible(false);
 				pnlGeneric.setVisible(false);
+				pnlGameWon.setVisible(false);
 				pnlStuff.setVisible(false);
 			}
 		});
+		btnBack.setBounds(235, 438, 89, 23);
+		pnlRules.add(btnBack);
+		pnlRules.setVisible(false);
 		
 
 		//Initialize Stuff Panel
@@ -275,40 +471,62 @@ public class GUI{
 		lblStuff.setBounds(10, 22, 216, 46);
 		pnlStuff.add(lblStuff);
 		
-		JLabel label_1 = new JLabel();
-		label_1.setText((String) null);
-		label_1.setHorizontalAlignment(SwingConstants.RIGHT);
-		label_1.setBounds(157, 7, 121, 14);
-		pnlStuff.add(label_1);
-		
-		JLabel label_2 = new JLabel();
-		label_2.setIcon(new ImageIcon(GUI.class.getResource("/img/bobsm.png")));
-		label_2.setBounds(10, 88, 95, 89);
-		pnlStuff.add(label_2);
+		JLabel lblBobsImage = new JLabel();
+		lblBobsImage.setIcon(new ImageIcon(GUI.class.getResource("/img/bobsm.png")));
+		lblBobsImage.setBounds(10, 88, 95, 89);
+		pnlStuff.add(lblBobsImage);
 		
 		JLabel label_3 = new JLabel("Bob");
 		label_3.setBounds(10, 71, 46, 14);
 		pnlStuff.add(label_3);
 		
-		editorPane = new JEditorPane();
-		editorPane.setContentType("html");
+		editorPane = new JTextArea();
+		editorPane.setFont(new Font("Courier New", Font.PLAIN, 11));
+		editorPane.setWrapStyleWord(true);
+		editorPane.setLineWrap(true);
+		//editorPane.setContentType("html");
 		editorPane.setBackground(Color.LIGHT_GRAY);
 		editorPane.setText("Is this it?");
 		editorPane.setEditable(false);
 		editorPane.setBounds(10, 267, 268, 137);
 		pnlStuff.add(editorPane);
 		
-		btnReturn = new JButton("Return");
+		btnReturn = new JButton("Return..");
 		btnReturn.setBounds(106, 420, 81, 31);
 		pnlStuff.add(btnReturn);
 		btnReturn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				pnlWelcome.setVisible(false);
 				pnlRules.setVisible(false);
-				pnlGeneric.setVisible(true);
+				pnlGameWon.setVisible(false);
 				pnlStuff.setVisible(false);
+				pnlGeneric.setVisible(true);
+				loadScene(game.prevscene);
+
 			}
 		});
+		
+		btnBuyItem = new JButton("Buy Item");
+		btnBuyItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (!game.bob.items[cboStuff.getSelectedIndex()].isOwned()){
+					if (game.bob.getMoney() >= game.bob.items[cboStuff.getSelectedIndex()].getCost()){
+						game.bob.items[cboStuff.getSelectedIndex()].setOwned(true);
+						game.bob.setMoney(game.bob.getMoney()- game.bob.items[cboStuff.getSelectedIndex()].getCost());
+						
+						editorPane.setText("You've bought a " + cboStuff.getSelectedItem().toString());
+						lblBobMoney.setText("Money: $"+game.bob.getMoney());
+						lblMoney.setText("Money: $"+game.bob.getMoney());
+						btnBuyItem.setEnabled(false);
+						//loadScene("buy stuff");
+					}
+					//else {lblAlreadyUsed.setText("You can't afford this item");}
+					
+				}
+			}
+		});
+		btnBuyItem.setBounds(197, 420, 81, 31);
+		pnlStuff.add(btnBuyItem);
 		
 		//"Powerbar ($50)", "Bike Chain ($50)",	"Pepper Spray ($75)","Hockey Stick ($150)",	"Corrupt Police Officer ($100)"
 		btnUseItem = new JButton("Use Item");
@@ -317,11 +535,12 @@ public class GUI{
 				//need an event here to implement attack with item
 				String selItem = cboStuff.getSelectedItem().toString();
 				
-				pnlGeneric.setVisible(true);
+				pnlGameWon.setVisible(false);
 				pnlStuff.setVisible(false);
 				pnlWelcome.setVisible(false);
 				pnlRules.setVisible(false);
-				
+				pnlRules.setVisible(false);
+				pnlGeneric.setVisible(true);
 				int attackval;
 				Item thisItem;
 				thisItem = game.bob.findItembyName(selItem);
@@ -337,8 +556,8 @@ public class GUI{
 				}
 				else if (thisItem.getName().equals("Bike Chain")) {
 					attackval = game.bob.attack();
-					game.badguy.setCurhealth(game.badguy.getCurhealth() - (attackval + 2));
-					jepDialog.setText(jepDialog.getText() + "\n" + game.bob.useitem(thisItem) + attackval + " (+2) points");
+					game.badguy.setCurhealth(game.badguy.getCurhealth() - (attackval + 3));
+					jepDialog.setText(jepDialog.getText() + "\n" + game.bob.useitem(thisItem) + attackval + " (+3) points");
 				}
 				else if (thisItem.getName().equals("Hockey Stick")) {
 					attackval = game.bob.attack();
@@ -346,8 +565,16 @@ public class GUI{
 					jepDialog.setText(jepDialog.getText() + "\n" + game.bob.useitem(thisItem) + attackval + " (x2) points!");
 				}
 				else if (thisItem.getName().equals("Corrupt Police Officer")) {
-					game.badguy.setCurhealth(0);
-					jepDialog.setText(jepDialog.getText() + "\n" + game.bob.useitem(thisItem));
+					if (game.bob.getMoney() >= 25){
+						game.badguy.setCurhealth(0);
+						jepDialog.setText(jepDialog.getText() + "\n" + game.bob.useitem(thisItem));
+					}
+					else {
+						jepDialog.setText(jepDialog.getText() + "\n" + game.bob.useitem(thisItem) +
+								"\n Unfortunately you don't have enough money and the cop ignores you!");
+					}
+					
+					
 				}
 				//call function to calculate attack
 				attackResponse();
@@ -360,157 +587,102 @@ public class GUI{
 		pnlStuff.add(btnUseItem);
 		
 		cboStuff = new JComboBox();
+		//add items
+
 		cboStuff.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent arg0) {
-				checkItemState();
+				checkItemState(game.curscene);
 				
 			}
 		});
-		cboStuff.setModel(new DefaultComboBoxModel(itemNames));
+		
+		System.out.println(cboStuff.getSelectedIndex());
 		cboStuff.setToolTipText("Pick an Item");
 		cboStuff.setBounds(10, 236, 268, 20);
 		pnlStuff.add(cboStuff);
 		
 		lblItem = new JLabel("New label");
+		lblItem.setIcon(new ImageIcon(GUI.class.getResource("/img/question.png")));
 		
 		lblItem.setBounds(157, 88, 121, 120);
 		//imgIcon = new ImageIcon(getClass().getResource("/img/bikechain.png"));
-		lblItem.setIcon(imgIcons[0]);
+		//lblItem.setIcon(imgIcons[0]);
 		pnlStuff.add(lblItem);
 		
 		lblAlreadyUsed = new JLabel("This item is already used");
 		lblAlreadyUsed.setForeground(Color.RED);
 		lblAlreadyUsed.setHorizontalAlignment(SwingConstants.RIGHT);
-		lblAlreadyUsed.setBounds(142, 219, 136, 14);
+		lblAlreadyUsed.setBounds(10, 219, 268, 14);
 		pnlStuff.add(lblAlreadyUsed);
+		
+		lblMoney = new JLabel();
+		lblMoney.setText("Money: 50");
+		lblMoney.setFont(new Font("Tahoma", Font.BOLD, 11));
+		lblMoney.setBounds(10, 188, 95, 14);
+		pnlStuff.add(lblMoney);
 		pnlStuff.setVisible(false);
-		
-		//Welcome Panel 
-		pnlWelcome = new JPanel();
-		pnlWelcome.setBounds(0, 0, 334, 472);
-		frame.getContentPane().add(pnlWelcome);
-		pnlWelcome.setLayout(null);
 		loadWelcomePanel();
-		
-		pnlRules = new JPanel();
-		pnlRules.setBounds(0, 0, 334, 472);
-		frame.getContentPane().add(pnlRules);
-		pnlRules.setLayout(null);
-		
-		JLabel lblRules = new JLabel();
-		lblRules.setText("How to Play");
-		lblRules.setFont(new Font("Hobo Std", Font.PLAIN, 36));
-		lblRules.setBounds(10, 22, 216, 46);
-		pnlRules.add(lblRules);
-		
-		JEditorPane dtrpnDraftYourGoal = new JEditorPane();
-		dtrpnDraftYourGoal.setFocusable(false);
-		dtrpnDraftYourGoal.setEditable(false);
-		dtrpnDraftYourGoal.setText("DRAFT:\r\nYour goal is to win battles to complete jobs and make money. You start each battle with full health. You attack the opponent which reduces the opponent by a random value of 2-12 multiplied by the strength. After every time you attack they respond by attacking. Their attack on you is calculated the same way. You continue fighting until one of you dies or you decide to flee. If you die you lose the game. If you flee your health goes back to full before you return to fight again but you lose money. If you run completely out of money you also lose.\r\nIf you win you gain money and points and go to the next level. You can use your health to buy things to help you in future battles. Each thing that you own can be used once every battle. The trick is to buy things so that you can win battles but also not to buy too many things so that if you have to flee you don\u2019t go broke. \r\nBad guys don\u2019t flee by the way. They fight to the death.\r\n");
-		dtrpnDraftYourGoal.setBounds(10, 79, 314, 327);
-		pnlRules.add(dtrpnDraftYourGoal);
-		
-		JButton btnBack = new JButton("Back");
-		btnBack.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				pnlWelcome.setVisible(true);
-				pnlRules.setVisible(false);
-				pnlGeneric.setVisible(false);
-				pnlStuff.setVisible(false);
-			}
-		});
-		btnBack.setBounds(235, 438, 89, 23);
-		pnlRules.add(btnBack);
-			
-		
-		pnlWelcome.setVisible(true);
-		pnlRules.setVisible(false);
 	}
 	
 	private void loadWelcomePanel(){
-		JLabel lblTitle = new JLabel();
-		lblTitle.setFont(new Font("Hobo Std", Font.PLAIN, 36));
-		lblTitle.setBounds(10, 22, 216, 46);
-		lblTitle.setText("Welcome"); //Welcome, Battle!, etc
-		pnlWelcome.add(lblTitle);
-		
-		//Bob Icon
-		JLabel lblBobImage = new JLabel();
-		lblBobImage.setIcon(new ImageIcon(GameFrame.class.getResource("/img/bobsm.png")));
-		lblBobImage.setBounds(10, 88, 95, 89);
-		pnlWelcome.add(lblBobImage);
-								
-		//Main Text/Dialog Pane
-		JTextArea txtDialog = new JTextArea();
-		txtDialog.setFont(new Font("Courier New", Font.PLAIN, 11));
-		txtDialog.setEditable(false);
-		txtDialog.setText(game.getWelcomeMsg());
-		txtDialog.setBounds(10, 228, 181, 223);
-		txtDialog.setWrapStyleWord(true);
-		txtDialog.setLineWrap(true);
-		pnlWelcome.add(txtDialog);
-				
-		JButton btnStart = new JButton("Start");
-		btnStart.setBounds(197, 420, 81, 31);
-		btnStart.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				pnlWelcome.setVisible(false);
-				pnlRules.setVisible(false);
-				game.setLevel(1);
-				loadScene("battle");
-				pnlGeneric.setVisible(true);
-				//pnlGeneric.getCompo
-			}
-		});
-
-		pnlWelcome.add(btnStart);
-		
-		JButton btnCredits = new JButton("Credits");
-		btnCredits.setBounds(197, 378, 81, 31);
-		btnCredits.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				pnlWelcome.setVisible(false);
-				pnlGeneric.setVisible(false);
-				pnlRules.setVisible(true);
-			}
-		});
-		pnlWelcome.add(btnCredits);
-		
-		JButton btnRules = new JButton("Rules");
-		btnRules.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				pnlRules.setVisible(true);
-				pnlWelcome.setVisible(false);
-				pnlGeneric.setVisible(false);
-				pnlStuff.setVisible(false);
-			}
-		});
-		btnRules.setBounds(197, 336, 81, 31);
-		pnlWelcome.add(btnRules);
 	}
 	
 	private void loadScene(String scene){
-		for (Component c : pnlGeneric.getComponents()) {
-			c.setVisible(true);
-			c.setEnabled(true);
+		
+		
+		if (pnlGeneric.isVisible()){
+			for (Component c : pnlGeneric.getComponents()) {
+				c.setVisible(true);
+				c.setEnabled(true);
+			}
+			lblLevelUp.setVisible(false); //default hides
+			btnGameDone.setVisible(false); //default hides
 		}
 		//for item in panel, show all loop here
 		if (!scene.equals("other")){
 			lblTitle.setText(scene);
+			if (!scene.equals(game.curscene)){
+				game.prevscene = game.curscene;
+				System.out.println("game prev scene: " + game.prevscene);
+				game.curscene = scene;
+				System.out.println("game cur scene: " + game.curscene);
+			}
+		}
+		//loading scenes Rules or Credits for pnlRules
+		if (scene.equals("rules")){
+			jepRulesCreditsText.setText("DRAFT:\r\nYour goal is to win battles to complete jobs and make money. " +
+					"You start each battle with full health. You attack the opponent which" +
+					"reduces the opponent by a random value of 2-12 multiplied by the strength." +
+					"After every time you attack they respond by attacking. Their attack on you is " +
+					"calculated the same way. You continue fighting until one of you dies or you decide " +
+					"to flee. If you die you lose the game. If you flee your health goes back to " +
+					"full before you return to fight again but you lose money. If you run completely " +
+					"out of money you also lose.\r\nIf you win you gain money and points and go to the" +
+					"next level. You can use your health to buy things to help you in future battles. " +
+					"Each thing that you own can be used once every battle. The trick is to buy things " +
+					"so that you can win battles but also not to buy too many things so that if you have " +
+					"to flee you don\u2019t go broke. \r\nBad guys don\u2019t flee by the way. " +
+					"They fight to the death.\r\n");			
+		}
+		else if (scene.equals("credits")){
+			jepRulesCreditsText.setText("Game created by RSutcliffe. Graphics stolen from the internet.\n" +
+					"code viewable on GitHub here: https://github.com/ryansutc/PROG1400_Assign3");
 		}
 		
-		
 		//hide panel items to fit for screen
-		if (scene.equals("battle")){
+		else if (scene.equals("battle")){
+			lblLevelUp.setVisible(false);
         	btnNextLevel.setVisible(false);
         	btnBuyStuff.setVisible(false);
         	btnReturnToWelcome.setVisible(false);
         	jepDialog.setText(game.getBattleMsgList()[game.getLevel() - 1]);
-        	
+        	lblBadguyImage.setIcon(game.badguy.getIcon());
         	int badguyNum = game.getLevel() - 1;
+        	
         	//lblBadguyImage.setIcon(arg0); //need to create a list of badguy images
 		}	
-        if (scene.equals("battledone")){
+		else if (scene.equals("battledone")){
+			lblLevelUp.setVisible(false);
         	btnNextLevel.setVisible(false);
         	btnBuyStuff.setVisible(false);
         	btnReturnToWelcome.setVisible(false);
@@ -518,7 +690,41 @@ public class GUI{
         	btnUseStuff.setEnabled(false);
         	btnFlee.setEnabled(false);
         }
-		
+		else if (scene.equals("buy stuff") || scene.equals("use stuff")){
+			lblMoney.setText("Money: $" + game.bob.getMoney());
+			
+			if (scene.equals("buy stuff")){
+				/*
+				for (int i = 0, len = game.bob.items.length; i < len; i++){
+					if (game.bob.items[i].isOwned() == false){
+						cboStuff.addItem(game.bob.items[i].getName() + " ($" + game.bob.items[i].getCost() + ")");
+					}		
+				}
+				cboStuff.setSelectedItem(0);*/
+				cboStuff.removeAllItems();
+				for (int i = 0, len = game.bob.items.length; i < len; i++){
+					cboStuff.addItem(game.bob.items[i].getName() + " ($" + game.bob.items[i].getCost() + ")");
+				}
+			    cboStuff.setSelectedItem(0);
+				btnUseItem.setVisible(false);
+				btnBuyItem.setVisible(true);
+				
+			}
+			else if (scene.equals("use stuff")) {
+				cboStuff.removeAllItems();
+				for (int i = 0, len = game.bob.items.length; i < len; i++){
+					if (game.bob.items[i].isOwned()){
+						cboStuff.addItem(game.bob.items[i].getName());
+					}
+				}
+				if (cboStuff.getItemCount() != 0){
+					cboStuff.setSelectedItem(0);
+				}
+				btnUseItem.setVisible(true);
+				btnBuyItem.setVisible(false);
+			}
+			checkItemState(scene);
+		}
 		else if (scene.equals("win") || scene.equals("lose")){ //lose is flee
         	lblBadguyImage.setVisible(false);
         	lblBadguyHealth.setVisible(false);
@@ -532,10 +738,20 @@ public class GUI{
         	btnReturnToWelcome.setVisible(false);
             
         	if (scene.equals("win")){
-        		jepDialog.setText(game.winMsgList[game.getLevel() - 1]);
+        		jepDialog.setText(game.winMsgList[game.getLevel() - 2]);
+        		
+        		lblLevelUp.setVisible(true);
+
         	}
         	else {
         		jepDialog.setText(game.getLossMsg());
+        		lblLevelUp.setText("Money: -$15");
+        		lblLevelUp.setVisible(true);
+        		
+        		if (game.bob.getMoney() <= 15){
+        			jepDialog.setText(jepDialog.getText() + 
+        					"\nYou're almost broke. You can't afford to flee next time!");
+        		}
         	}
 		}
 		
@@ -550,6 +766,9 @@ public class GUI{
         	btnAttack.setVisible(false);
         	btnNextLevel.setVisible(false);
         	btnBuyStuff.setVisible(false);
+        	btnBattleOver.setVisible(false);
+        	lblLevelUp.setVisible(false);
+        	
         	//btnReturn.setVisible(true);
         	jepDialog.setText(game.getGameoverMsg());
         	        	
@@ -561,12 +780,15 @@ public class GUI{
 		lblBobMoney.setText("Money: " + game.bob.getMoney());
 		
 		lblLevelScore.setText("Level: " + game.getLevel() + "    Score: " + game.getScore());
-		
+		lblFinalScore.setText("Final Score: " + game.getScore());
 		lblBadguy.setText(game.badguy.getName());
     	lblBadguyHealth.setText("Health: " + game.badguy.getCurhealth());
     	lblBadguyStrength.setText("Strength: " + game.badguy.getStrength());
     	lblBadguyMoney.setText("Money: " + game.badguy.getMoney());
-		
+    	
+    	if (game.bob.getMoney() < 15){
+    		btnFlee.setEnabled(false);
+    	}
 		
 	}
 	
@@ -587,24 +809,62 @@ public class GUI{
 			jepDialog.setText(jepDialog.getText() + "\n" + game.badguy.getDeathMsg());
 			//loadScene("win");
 			loadScene("battledone");
-			return;
+    		if (game.getLevel() < 4){ 
+    			lblLevelUp.setText(game.setLevel(game.getLevel() + 1)); //changing level will update badguy automatically
+    			return;
+    		}
+    		else {
+    			jepDialog.setText(game.winMsgList[3]);
+    			btnGameDone.setVisible(true);
+    			//game.setLevel(level);
+    			return;
+    			//do something here to calculate final score!
+    		}
 		}
 		loadScene("other"); //other as a parameter essentially means refresh the same panel/scene
 	}
-	//update item on selection change and form load. Prevents item reuse.
-	private void checkItemState(){
-		lblItem.setIcon(imgIcons[cboStuff.getSelectedIndex()]);
-				
+	//update items on selection change and form load for pnlStuff. Prevents item reuse.
+	private void checkItemState(String scene){
+		System.out.println(cboStuff.getSelectedIndex());
+		if (cboStuff.getSelectedIndex() == -1){
+			lblAlreadyUsed.setText("You don't own any items yet!");
+			btnUseItem.setEnabled(false);
+			editorPane.setText("Get yourself some money and buy some stuff first.");
+			return;
+		}
+		lblItem.setIcon(game.bob.findItembyName(cboStuff.getSelectedItem().toString()).getIcon());
+		//else let the default question mark show.
+		
 		//find matching item
 		Item selItem = game.bob.findItembyName(cboStuff.getSelectedItem().toString());
 		editorPane.setText(selItem.getDescription());
-		if (selItem.isUsed() == true){
-			btnUseItem.setEnabled(false);
-			lblAlreadyUsed.setVisible(true); 
+		if (scene.equals("use stuff")){
+			if (selItem.isUsed() == true){
+				btnUseItem.setEnabled(false);
+				lblAlreadyUsed.setText("You already used this item.");
+				lblAlreadyUsed.setVisible(true); 
+			}
+			else { 
+				btnUseItem.setEnabled(true);
+				lblAlreadyUsed.setVisible(false);
+			}
 		}
-		else { 
-			btnUseItem.setEnabled(true);
-			lblAlreadyUsed.setVisible(false);
+		else if (scene.equals("buy stuff")){
+			if (selItem.isOwned() == true){
+				lblAlreadyUsed.setText("You already own this");
+				lblAlreadyUsed.setVisible(true);
+				btnBuyItem.setEnabled(false);
+			}
+			else if (selItem.getCost() > game.bob.getMoney()){
+				lblAlreadyUsed.setText("You can't afford this item");
+				lblAlreadyUsed.setVisible(true);
+				btnBuyItem.setEnabled(false);
+			}
+			else {
+				btnBuyItem.setEnabled(true);
+				lblAlreadyUsed.setVisible(false);
+			}
 		}
+		
 	}
 }
