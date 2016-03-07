@@ -1,5 +1,8 @@
 package RPGGame;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 public class Bob extends Character {
 	public Item[] items = new Item[5];
 
@@ -7,13 +10,22 @@ public class Bob extends Character {
 		//"Powerbar ($50)", "Bike Chain ($50)",	"Pepper Spray ($75)","Hockey Stick ($150)",	"Corrupt Police Officer ($100)"
 		
 		this.setName("Bob");
+		this.setCurhealth(20);
 		setItems();
 	}
 	public String useitem(Item item){
 		//TODO
 	   return item.utilize();
 	}
-	
+	public void flee(){
+		this.setMoney(this.getMoney()-15);
+		this.setCurhealth(this.getMaxhealth());
+
+		//reset all items to available
+		for (Item i : this.items){
+			i.setUsed(false);
+		}
+	}
 	private void setItems(){ //initial setup of items
 		//items = new Item[4];
 		String[][] itemList = new String[5][4];
@@ -36,17 +48,23 @@ public class Bob extends Character {
 		itemList[3][0] = "Corrupt Police Officer";
 		itemList[3][1] = "Will beat opponent for you no matter what but will take another $50 from you every time you use him.";
 		itemList[3][2] = "50";
-		itemList[3][3] = "You bribe a corrupt cop and have him take care of your enemy for you for $50 bucks";
+		itemList[3][3] = "You bribe a corrupt cop and have him take care of your enemy for you for $25 bucks";
 		
 		itemList[4][0] = "Powerbar";
 		itemList[4][1] = "Powerbar will revive your health to full";
 		itemList[4][2] = "50";
 		itemList[4][3] = "You mow down a powerbar and get yourself back to full health. Rad!";
 		
+		Icon[] imgIcons = {new ImageIcon(getClass().getResource("/img/bikechain.png")), 
+				new ImageIcon(getClass().getResource("/img/hockeystick.png")),
+				new ImageIcon(getClass().getResource("/img/pepperspray.png")),
+				new ImageIcon(getClass().getResource("/img/corruptpoliceofficer.png")),
+				new ImageIcon(getClass().getResource("/img/powerbar.png"))
+		};
 
 		for (int x = 0, len =5; x<len; x++){
 		
-			items[x] = new Item(itemList[x][0], itemList[x][1],Integer.parseInt(itemList[x][2]), itemList[x][3]);
+			items[x] = new Item(itemList[x][0], itemList[x][1],Integer.parseInt(itemList[x][2]), itemList[x][3], imgIcons[x]);
 			
 		}
 		
