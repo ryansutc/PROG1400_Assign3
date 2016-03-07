@@ -2,10 +2,15 @@ package RPGGame;
 
 import java.awt.EventQueue;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 public class Game {
 
 	private int score = 0;
 	private int level = 1;
+	public String curscene = "other";
+	public String prevscene = "other";
 	
 	private String itemList[][]; //items with names, descriptions, costs
 	public String winMsgList[]; //win messages for each level
@@ -18,6 +23,10 @@ public class Game {
 	private String rulesMsg; //rules screen message
 	private String creditMsg; //credits screen message
 	public String[][] badguyList = new String[4][4];
+	private Icon badguyIcons[] = {new ImageIcon(getClass().getResource("/img/eviltaxidriver.png")), 
+			new ImageIcon(getClass().getResource("/img/evilsoccermom.png")),
+			new ImageIcon(getClass().getResource("/img/rabiddog.png")),
+			new ImageIcon(getClass().getResource("/img/bikethief.png"))};
     
 	GUI gui;
 	public Bob bob = new Bob(); //game has a main character
@@ -50,27 +59,20 @@ public class Game {
 		winMsgList[2] = "You’ve done well. The boss is almost thinking about giving you a raise. But there’s one more task to complete and bad guy to conquer. Get ready.";
 		winMsgList[3] = "You’ve really proved yourself! The boss is has promoted you to senior bike courier. You can call it a week and go home and enjoy the weekend. You’ve still got [money] in your pocket and thus have earned a total of [points]. Good game!";
 		
-		setLossMsg("You fled like a coward but saved your own life. You curhealth is once again full but your wallet is a bit lighter. Unfortunately those packages aren’t gonna deliver themselves. Get ready to go at it again and prove your worth!");
+		setLossMsg("You fled like a coward but saved your own life. You health is once again full but your wallet is a bit lighter. Unfortunately those packages aren’t gonna deliver themselves. Get ready to go at it again and prove your worth!");
 		setGameoverMsg("You’re too beat up to continue in this line of work. Time to retire. Oh well, I hear they’re hiring for the graveyard shift over at McDonalds. Game Over.");
 		setWelcomeMsg("You are Bob the Bike Courier, the new bike courier on the block. You need to battle adverseraries who are preventing you from doing your job making deliveries and travelling up and down the cities concrete jungle.");
 		
 		setBadGuyList();
 		
-		setBobItems(); //create items and assign to bob character (see method below)
-
+		//setBobItems(); //create items and assign to bob character (see method below)
+		
 		gui = new GUI(this);
 	}
 	
-	public String attack(){
-		return "unfinished";
-	}
-	
-	public void setBobItems(){ //create items and assign to bob character
 		
-		
-	}
 	private void setBadGuyList(){
-		//name, curhealth, strength, money
+		//name, curhealth, strength, money, icon
 		badguyList[0][0] = "Evil Taxi Driver";
 		badguyList[0][1] = "20";
 		badguyList[0][2] = "1";
@@ -92,20 +94,50 @@ public class Game {
 		badguyList[3][3] = "50";
 				
 	}
-	
-	public int setLevel(int level){
+	/*setLevel does a lot of things:
+	 * - updates the level
+	 * - also calls methods to update bob's stats
+	 * - also updates game score
+	 * - returns a msg about the level change
+	 */
+	public String setLevel(int level){
+		String msg = "";
+		if (level == 1){
+			bob.setMoney(20);
+		}
+		else {
+			bob.setMoney(bob.getMoney()+ badguy.getMoney());
+		}
 		
+		bob.setStrength(level);
 		this.level = level;
+		if (level != 1){
+			msg = "<html>Strength: +1 <br/>Money: +" + badguy.getMoney() +
+					"<br/>";
+		}
 		setBadGuy(level - 1);
-		bob.setCurhealth(badguy.getCurhealth()); //when level changes match bob's curhealth & maxhealth to badguy.
-		bob.setMaxhealth(badguy.getMaxhealth());
+		//update score, level, health, etc.
+		if (level != 1){
+			this.updateScore();
+			if ((badguy.getCurhealth() - 5) > bob.getMaxhealth()){
+				msg = msg + "Health is now: " + (badguy.getCurhealth()-5) + "</html>";
+			}
+			else {msg = msg + "</html>";}
+			
+			bob.setCurhealth(badguy.getCurhealth()-5);
+			bob.setMaxhealth(badguy.getMaxhealth()-5); //when level changes match bob's curhealth & maxhealth to badguy.
+		}
+		else {
+			bob.setCurhealth(20);
+		}
 		
 		//reset all items to available
 		for (Item i : bob.items){
 			i.setUsed(false);
 		}
 		
-		return level;
+		
+		return msg;
 	}
 	
 	public int getScore() {
@@ -114,6 +146,13 @@ public class Game {
 	
 	public void setScore(int score) {
 		this.score = score;
+	}
+	//autoupdates score on level change
+	private void updateScore(){
+		int score = this.getScore() + 100 +
+				this.bob.getCurhealth() + 
+				(this.bob.getMoney() * 2);
+		this.setScore(score);
 	}
     
 	//at end of game, converts your money to score
@@ -171,9 +210,13 @@ public class Game {
 		badguy = new BadGuy(badguyList[level][0], 
 				Integer.parseInt(badguyList[level][1]), 
 				Integer.parseInt(badguyList[level][2]),
-				Integer.parseInt(badguyList[level][3]));
+				Integer.parseInt(badguyList[level][3]),
+				badguyIcons[level]);
 		if (level == 3){
 			badguy.setDeathMsg(badguy.getName() + " says, 'Arg. How could this be my end?'");
+		}
+		if (level == 2){
+			badguy.setDeathMsg(badguy.getName() + " says, You've beaten me. Err, I mean, woof woof.");
 		}
 	}
 
@@ -186,4 +229,7 @@ public class Game {
 		this.attackMsg = attackMsg;
 	}
 
+
+	
+	
 }
