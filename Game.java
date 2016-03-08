@@ -1,9 +1,10 @@
 package RPGGame;
 
-import java.awt.EventQueue;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
+import java.awt.EventQueue;
+import java.awt.event.ActionListener;
+
+import javax.swing.*;
 
 public class Game {
 
@@ -28,19 +29,20 @@ public class Game {
 			new ImageIcon(getClass().getResource("/img/rabiddog.png")),
 			new ImageIcon(getClass().getResource("/img/bikethief.png"))};
     
-	GUI gui;
+	//GUI gui;
 	public Bob bob = new Bob(); //game has a main character
-	public BadGuy badguy; //game has a badguy
+	public BadGuy badguy; //game has a badguy       
 	
 	//MAIN-----------------
 	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
+		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Game game = new Game();
 					
-					
-					
+					BasicSplashScreen test = new BasicSplashScreen(); //don't know what this argument isfor
+					//test = SplashScreen.getSplashScreen();
+					//Game game = new Game();
+
 										
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -49,9 +51,10 @@ public class Game {
 		});
 	}
 	
+	    
 	public Game() {
-		
-		
+		       
+        //do main stuff here:
 		winMsgList = new String[4];
 		
 		winMsgList[0] = "You’ve done a good job defeating an enemy getting in your way of your first delivery. You’re next job is going to be harder though. Get yourself ready.";
@@ -67,10 +70,10 @@ public class Game {
 		
 		//setBobItems(); //create items and assign to bob character (see method below)
 		
-		gui = new GUI(this);
+		GUI gui = new GUI(this);
+
 	}
 	
-		
 	private void setBadGuyList(){
 		//name, curhealth, strength, money, icon
 		badguyList[0][0] = "Evil Taxi Driver";
