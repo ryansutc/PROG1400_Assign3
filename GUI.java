@@ -75,6 +75,7 @@ public class GUI{
 	public GUI(Game game) {
 		//call initialize to handle graphics stuff
 		this.game = game;
+		
 		initialize();
 	}
 
@@ -622,6 +623,7 @@ public class GUI{
 		pnlStuff.add(lblMoney);
 		pnlStuff.setVisible(false);
 		loadWelcomePanel();
+	    
 	}
 	
 	private void loadWelcomePanel(){
@@ -775,21 +777,22 @@ public class GUI{
 		}
 		
 		//things to do on generic panel regardless of scene
-		lblBobHealth.setText("Health: " + game.bob.getCurhealth());
-		lblBobStrength.setText("Strength: " + game.bob.getStrength());
-		lblBobMoney.setText("Money: " + game.bob.getMoney());
-		
-		lblLevelScore.setText("Level: " + game.getLevel() + "    Score: " + game.getScore());
-		lblFinalScore.setText("Final Score: " + game.getScore());
-		lblBadguy.setText(game.badguy.getName());
-    	lblBadguyHealth.setText("Health: " + game.badguy.getCurhealth());
-    	lblBadguyStrength.setText("Strength: " + game.badguy.getStrength());
-    	lblBadguyMoney.setText("Money: " + game.badguy.getMoney());
-    	
-    	if (game.bob.getMoney() < 15){
-    		btnFlee.setEnabled(false);
-    	}
-		
+		if (pnlGeneric.isVisible()){
+			lblBobHealth.setText("Health: " + game.bob.getCurhealth());
+			lblBobStrength.setText("Strength: " + game.bob.getStrength());
+			lblBobMoney.setText("Money: " + game.bob.getMoney());
+			
+			lblLevelScore.setText("Level: " + game.getLevel() + "    Score: " + game.getScore());
+			lblFinalScore.setText("Final Score: " + game.getScore());
+			lblBadguy.setText(game.badguy.getName());
+	    	lblBadguyHealth.setText("Health: " + game.badguy.getCurhealth());
+	    	lblBadguyStrength.setText("Strength: " + game.badguy.getStrength());
+	    	lblBadguyMoney.setText("Money: " + game.badguy.getMoney());
+	    	
+	    	if (game.bob.getMoney() < 15){
+	    		btnFlee.setEnabled(false);
+	    	}
+		}
 	}
 	
 	//a private function to implement badguy response after being attacked. Also to deal with a player death.
