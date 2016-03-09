@@ -39,10 +39,7 @@ public class Game {
 			public void run() {
 				try {
 					
-					BasicSplashScreen test = new BasicSplashScreen(); //don't know what this argument isfor
-					//test = SplashScreen.getSplashScreen();
-					//Game game = new Game();
-
+					BasicSplashScreen test = new BasicSplashScreen(); 
 										
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -64,7 +61,7 @@ public class Game {
 		
 		setLossMsg("You fled like a coward but saved your own life. You health is once again full but your wallet is a bit lighter. Unfortunately those packages aren’t gonna deliver themselves. Get ready to go at it again and prove your worth!");
 		setGameoverMsg("You’re too beat up to continue in this line of work. Time to retire. Oh well, I hear they’re hiring for the graveyard shift over at McDonalds. Game Over.");
-		setWelcomeMsg("You are Bob the Bike Courier, the new bike courier on the block. You need to battle adverseraries who are preventing you from doing your job making deliveries and travelling up and down the cities concrete jungle.");
+		setWelcomeMsg("You are Bob the Bike Courier, the new bike courier on the block. You need to battle adversaries who are preventing you from doing your job making deliveries and travelling up and down the city’s concrete jungle.");
 		
 		setBadGuyList();
 		
@@ -232,7 +229,4 @@ public class Game {
 		this.attackMsg = attackMsg;
 	}
 
-
-	
-	
 }
