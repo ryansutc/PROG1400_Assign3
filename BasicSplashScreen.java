@@ -31,9 +31,10 @@ public class BasicSplashScreen extends JWindow {
             if (PROGBAR_MAX == count) {
                 //splashScreen1.dispose();//dispose of splashscreen1
                 progressBarTimer.stop();//stop the timer
-                killMe();
+                
                 //createAndShowFrame();
             	Game game = new Game();
+            	killMe();
             }
             count++;//increase counter
         }
